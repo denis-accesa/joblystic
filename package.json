@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "scrape": "tsx ./server/scrap-job-boards.ts"
+    "scrap": "tsx ./server/scrap-job-boards.ts",
+    "filter": "tsx ./server/filter-jobs.ts"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "openai": "^4.58.1",
     "puppeteer": "^23.3.0",
-    "vue": "^3.4.37"
+    "vue": "^3.4.37",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import puppeteer, { Page } from 'puppeteer';
-import { AnyJobBoard, boardsData } from './boards.data.ts';
+import { AnyJobBoard, boardsData } from './inputs/boards.data.ts';
 import {
   loadPageWithPagination,
   loadPageWithShowMoreButton,
@@ -9,7 +9,7 @@ import {
 
 import { JobPost } from './services/scraper.ts';
 
-const browser = await puppeteer.launch({ headless: true, devtools: true });
+const browser = await puppeteer.launch({ headless: false, devtools: true });
 const start = performance.now();
 const jobPosts = await scrapConcurrently(boardsData, 4);
 const end = performance.now();
