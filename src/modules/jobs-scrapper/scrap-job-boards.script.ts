@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import * as fs from 'node:fs';
 import puppeteer, { Page } from 'puppeteer';
 import { JobPost } from '../../models/jobs.model.ts';
+import { withPool } from '../../utils/promise.utils.ts';
 import { AnyJobBoard, boardsData } from './data/boards.data.ts';
 import {
   loadPageWithPagination,
@@ -50,7 +51,10 @@ async function extractJobLinks(company: string, jobBoard: AnyJobBoard) {
     console.debug(`[${company}]`, `Found ${engineeringJobTitles.size} engineering jobs`);
     const engineeringJobs = allJobs.filter((job) => engineeringJobTitles.has(job.title));
     console.debug(`[${company}]`, `Removed ${allJobs.length - engineeringJobs.length} jobs`);
-    await fetch(process.env.WORKER_URL!, { method: 'POST', body: JSON.stringify(engineeringJobs) });
+    await fetch(`${process.env.WORKER_URL!}/api/job-posts`, {
+      method: 'POST',
+      body: JSON.stringify(engineeringJobs),
+    });
     return engineeringJobs;
   } catch (error) {
     console.error(`[${company}]`, `Unable to load ${jobBoard.link}`, error);
@@ -76,24 +80,9 @@ function getLoader(jobBoard: AnyJobBoard) {
 
 async function scrapConcurrently(jobBoards: Record<string, AnyJobBoard>, maxConcurrent: number) {
   const jobPosts: JobPost[][] = [];
-  const executing = new Set<string>();
-  const allPromises: Promise<unknown>[] = [];
-
-  for (const [company, board] of Object.entries(jobBoards)) {
-    console.debug(`[${company}]`, 'Queued');
-    if (executing.size >= maxConcurrent) {
-      console.debug(`[${company}]`, 'waiting');
-      await Promise.race(executing);
-    }
-    const promise = extractJobLinks(company, board).then((result) => jobPosts.push(result));
-    promise.finally(() => {
-      console.debug(`[${company}]`, 'completed');
-      executing.delete(company);
-    });
-    executing.add(company);
-    allPromises.push(promise);
-  }
-
-  await Promise.all(allPromises);
+  await withPool(maxConcurrent, Object.entries(jobBoards), async ([company, board]) => {
+    const jobs = await extractJobLinks(company, board);
+    jobPosts.push(jobs);
+  });
   return jobPosts.flat();
 }
