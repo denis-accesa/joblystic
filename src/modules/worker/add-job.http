@@ -1,0 +1,11 @@
+### Add a new job post
+POST http://127.0.0.1:8787
+Content-Type: application/json
+
+{
+  "company": "ExampleCorp",
+  "title": "Senior Frontend Developer",
+  "link": "https://example.com/careers/senior-frontend-developer",
+  "status": "new",
+  "firstSeenOn": "2023-10-01T00:00:00Z"
+}

@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer';
-import { JobBoard, PaginatedJobBoard, ShowMoreButtonJobBoard } from '../boards.data.ts';
+import { JobBoard, PaginatedJobBoard, ShowMoreButtonJobBoard } from '../data/boards.data.ts';
 
 async function loadData(page: Page, jobBoard: JobBoard) {
   await page.waitForFunction(
@@ -18,9 +18,9 @@ async function loadData(page: Page, jobBoard: JobBoard) {
     const regex = new RegExp(regexString);
     return Array.from(document.querySelectorAll('a'))
       .filter((link) => (regex.test(link.href) && !!link.textContent) || link.ariaLabel)
-      .map((link) => ({
-        title: (link.textContent || link.ariaLabel)!.trim(),
-        href: link.href,
+      .map((linkEl) => ({
+        title: (linkEl.textContent || linkEl.ariaLabel)!.trim(),
+        link: linkEl.href,
       }));
   }, jobBoard.regex.source);
 }

@@ -10,9 +10,9 @@ export const JobDetailsSchema = z.object({
 export const JobPostSchema = z.object({
   company: z.string(),
   title: z.string(),
-  href: z.string(),
+  link: z.string(),
   status: z.enum(['new', 'crawled', 'disabled']),
-  firstSeenOn: z.date(),
+  firstSeenOn: z.coerce.date(),
   details: JobDetailsSchema.optional(),
 });
 

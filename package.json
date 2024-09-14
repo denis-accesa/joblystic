@@ -12,7 +12,9 @@
     "deploy": "wrangler deploy",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "wrangler:d1:create-tables": "wrangler d1 execute DB --file=src/modules/worker/db/job-posts.sql",
+    "wrangler:d1:query": "npx wrangler d1 execute DB --command"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
