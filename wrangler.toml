@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "d1-tutorial"
-main = "src/index.ts"
+main = "src/modules/worker/index.ts"
 compatibility_date = "2024-09-09"
 compatibility_flags = ["nodejs_compat"]
 

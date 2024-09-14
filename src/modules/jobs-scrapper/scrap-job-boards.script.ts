@@ -1,15 +1,17 @@
+import { config } from 'dotenv';
 import * as fs from 'node:fs';
 import puppeteer, { Page } from 'puppeteer';
-import { AnyJobBoard, boardsData } from './inputs/boards.data.ts';
+import { JobPost } from '../../models/jobs.model.ts';
+import { AnyJobBoard, boardsData } from './data/boards.data.ts';
 import {
   loadPageWithPagination,
   loadPageWithShowMoreButton,
   loadStaticPage,
-} from './services/data-loaders.ts';
+} from './services/data-loaders.service.ts';
+import { pickEngineeringJobs } from './services/pick-engineering-jobs.service.ts';
 
-import { JobPost } from './services/scraper.ts';
-
-const browser = await puppeteer.launch({ headless: false, devtools: true });
+config();
+const browser = await puppeteer.launch({ headless: true });
 const start = performance.now();
 const jobPosts = await scrapConcurrently(boardsData, 4);
 const end = performance.now();
@@ -17,28 +19,43 @@ console.log(`Scraped ${jobPosts.length} jobs in ${(end - start) / 1000}s`);
 fs.writeFileSync('job-links.json', JSON.stringify(jobPosts, null));
 await browser.close();
 
-async function extractJobLinks(jobBoard: AnyJobBoard) {
-  console.info(`[${jobBoard.name}]`, 'Extracting job links');
+async function extractJobLinks(company: string, jobBoard: AnyJobBoard) {
+  console.info(`[${company}]`, 'Extracting job links');
   const page = await browser.newPage();
   try {
     await page.goto(jobBoard.link);
     const loader = getLoader(jobBoard);
-    const jobLinks: JobPost[] = [];
+    const allJobs: JobPost[] = [];
     for await (const links of loader(page)) {
-      jobLinks.push(...links.filter((link) => !!link.href.trim()));
+      allJobs.push(
+        ...links
+          .filter((link) => !!link.href.trim())
+          .map(
+            (link): JobPost => ({
+              ...link,
+              status: 'new',
+              firstSeenOn: new Date(),
+              company: company,
+            }),
+          ),
+      );
     }
 
-    if (!jobLinks.length) {
-      console.warn(`[${jobBoard.name}]`, `No job links found`);
+    if (!allJobs.length) {
+      console.warn(`[${company}]`, `No job links found`);
     } else {
-      console.log(`[${jobBoard.name}]`, `Found ${jobLinks.length} job links for ${jobBoard.name}`);
+      console.log(`[${company}]`, `Found ${allJobs.length} job links for ${company}`);
     }
-    return jobLinks;
+    const engineeringJobTitles = new Set(await pickEngineeringJobs(allJobs));
+    console.debug(`[${company}]`, `Found ${engineeringJobTitles.size} engineering jobs`);
+    const engineeringJobs = allJobs.filter((job) => engineeringJobTitles.has(job.title));
+    console.debug(`[${company}]`, `Removed ${allJobs.length - engineeringJobs.length} jobs`);
+    return engineeringJobs;
   } catch (error) {
-    console.error(`[${jobBoard.name}]`, `Unable to load ${jobBoard.link}`, error);
+    console.error(`[${company}]`, `Unable to load ${jobBoard.link}`, error);
     return [];
   } finally {
-    console.debug(`[${jobBoard.name}]`, 'Closing page for', jobBoard.name);
+    console.debug(`[${company}]`, 'Closing page for', company);
     await page.close();
   }
 }
@@ -56,23 +73,23 @@ function getLoader(jobBoard: AnyJobBoard) {
   }
 }
 
-async function scrapConcurrently(jobBoards: AnyJobBoard[], maxConcurrent: number) {
+async function scrapConcurrently(jobBoards: Record<string, AnyJobBoard>, maxConcurrent: number) {
   const jobPosts: JobPost[][] = [];
   const executing = new Set<string>();
   const allPromises: Promise<unknown>[] = [];
 
-  for (const board of jobBoards) {
-    console.debug(`[${board.name}]`, 'Queued');
+  for (const [company, board] of Object.entries(jobBoards)) {
+    console.debug(`[${company}]`, 'Queued');
     if (executing.size >= maxConcurrent) {
-      console.debug(`[${board.name}]`, 'waiting');
+      console.debug(`[${company}]`, 'waiting');
       await Promise.race(executing);
     }
-    const promise = extractJobLinks(board).then((result) => jobPosts.push(result));
+    const promise = extractJobLinks(company, board).then((result) => jobPosts.push(result));
     promise.finally(() => {
-      console.debug(`[${board.name}]`, 'cleanup');
-      executing.delete(board.name);
+      console.debug(`[${company}]`, 'cleanup');
+      executing.delete(company);
     });
-    executing.add(board.name);
+    executing.add(company);
     allPromises.push(promise);
   }
 

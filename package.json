@@ -7,9 +7,7 @@
     "dev": "wrangler dev",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "scrap": "tsx ./server/scrap-job-boards.ts",
-    "filter": "tsx ./server/filter-jobs.ts",
-    "pick:engineering": "tsx ./server/pick-engineering-jobs.ts",
+    "scrap-job-boards": "tsx ./src/modules/jobs-scrapper/scrap-job-boards.script.ts",
     "classify:job": "tsx ./server/classify-job.ts",
     "deploy": "wrangler deploy",
     "start": "wrangler dev",
@@ -23,13 +21,13 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/vitest-pool-workers": "^0.5.2",
     "@cloudflare/workers-types": "^4.20240909.0",
     "prettier": "^3.3.3",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
     "vite": "^5.4.5",
     "vitest": "2.1.1",
-    "wrangler": "^3.78.0"
+    "wrangler": "^3.78.2"
   }
 }
