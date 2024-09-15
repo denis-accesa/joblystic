@@ -18,6 +18,7 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "hono": "^4.6.1",
+    "ollama": "^0.5.9",
     "openai": "^4.61.0",
     "puppeteer": "^23.3.0",
     "zod": "^3.23.8"
