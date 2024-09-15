@@ -22,7 +22,6 @@ async function scrapAll() {
     'https://jobs.lever.co/modern-age',
     'https://fleetstudio.freshteam.com/jobs',
     'https://job-boards.greenhouse.io/wellsaidlabs',
-    'https://web3.career/remote-jobs',
     'https://boards.greenhouse.io/embed/job_board?for=matik&b=https%3A%2F%2Fwww.matik.io%2Fcareer',
   ]) {
     const allLinks = await scrapeJobPage(url);
